@@ -1,0 +1,6 @@
+{
+	"devDependencies": {
+		"@types/node": "^18.15.11",
+		"tsx": "^3.12.6"
+	}
+}
