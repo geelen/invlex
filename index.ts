@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 
 const Z_ASCII = 122
-const BASE = 64
+const BASE = 32
 
 function toInvLex(n: number) {
   if (n > Number.MAX_SAFE_INTEGER)
@@ -29,7 +29,7 @@ function fromInvLex(str: string) {
 const random = () =>
   Math.round(Math.random() * 20 + Math.random() ** 50 * Number.MAX_SAFE_INTEGER)
 
-const numbers = Array.from(new Set(new Array(50).fill(null).map(random))) // unique randoms
+const numbers = Array.from(new Set(new Array(20).fill(null).map(random))) // unique randoms
 console.log(numbers)
 
 const names = numbers.map(toInvLex)
