@@ -23,16 +23,16 @@ invlex.encode(84296151321634) // "ob35545d833dd"
 ```
 
 ```ts
-import { base32 as invlex } from 'invlex'
+import { base36 as invlex } from 'invlex'
 
-invlex.encode(0) // "zv"
-invlex.encode(1) // "zu"
-invlex.encode(15) // "zg"
-invlex.encode(16) // "zf"
-invlex.encode(1959) // "xu2o"
-invlex.encode(49584741) // "uugmpcq"
-invlex.encode(350371465044) // "slpm3ne5b"
-invlex.encode(84296151321634) // "qtjal2tgcut"
+invlex.encode(0) // "zz"
+invlex.encode(1) // "zy"
+invlex.encode(15) // "zk"
+invlex.encode(16) // "zj"
+invlex.encode(1959) // "xyhk"
+invlex.encode(49584741) // "v6h862"
+invlex.encode(350371465044) // "svj1hvjcb"
+invlex.encode(84296151321634) // "r64avryqxp"
 ```
 
 ```ts
@@ -48,80 +48,89 @@ invlex.encode(350371465044) // "ttpYL2Pz"
 invlex.encode(84296151321634) // "sc3uyZfif"
 ```
 
+Also defined is `base32`, and each export has a corresponding `.decode` function.
+
 ## Format
 
 Numbers are converted to a hex string (or base-32 or base-64 string, see below), then inverted (so "001" becomes "ffe"), then prefixed with a single letter that encodes the length, starting at 'z' and moving up the alphabet, meaning that longer (larger) numbers appear first when sorted lexicographically.
 
-This uses a lot less bytes than a naive approach (`Number.MAX_SAFE_INTEGER - n`, for example), and by converting to hex/base32/64, makes the IDs look opaque enough to not look obviously "wrong"
-
+This uses a lot less bytes than a naive approach (`Number.MAX_SAFE_INTEGER - n`, for example), and by converting to hex/base32/64, makes the IDs look opaque enough to not look obviously "wrong".
 
 ## Development
 
 ```sh
 pnpm install
-pnpm tsx index.ts
+pnpm test
 ```
 
-```js
-[
-           17,             15,
-   8799836659,             12,
-            7,             19,
-            4,             16,
-          162,           1278,
-    421715849,  7203223790733,
-           13,             10,
-  11204850556, 24505179268642,
-    142380296
-]
-[
-  'ze',       'zg',
-  'tnpnq9gc', 'zj',
-  'zo',       'zc',
-  'zr',       'zf',
-  'yqt',      'xuo1',
-  'ujdq83m',  'rpebf6f6ri',
-  'zi',       'zl',
-  'tli27343', 'r9mpont6et',
-  'uro6snn'
-]
-[
-  24505179268642, 7203223790733,
-     11204850556,    8799836659,
-       421715849,     142380296,
-            1278,           162,
-              19,            17,
-              16,            15,
-              13,            12,
-              10,             7,
-               4
-]
-[
-  'r9mpont6et', 'rpebf6f6ri',
-  'tli27343',   'tnpnq9gc',
-  'ujdq83m',    'uro6snn',
-  'xuo1',       'yqt',
-  'zc',         'ze',
-  'zf',         'zg',
-  'zi',         'zj',
-  'zl',         'zo',
-  'zr'
-]
-17 => ze => 17
-15 => zg => 15
-8799836659 => tnpnq9gc => 8799836659
-12 => zj => 12
-7 => zo => 7
-19 => zc => 19
-4 => zr => 4
-16 => zf => 16
-162 => yqt => 162
-1278 => xuo1 => 1278
-421715849 => ujdq83m => 421715849
-7203223790733 => rpebf6f6ri => 7203223790733
-13 => zi => 13
-10 => zl => 10
-11204850556 => tli27343 => 11204850556
-24505179268642 => r9mpont6et => 24505179268642
-142380296 => uro6snn => 142380296
+## Benchmarks
+
+Absolutely no effort has been put into optimising this, but I was curious. There are two code paths within `invlex`, `base16` and `base32` use `Number.toString(radix)` and `parseInt(radix)`, whereas `base36` and `base64` both use a lookup into a preset array.
+
+```sh
+Running "Baseline" suite...
+Progress: 100%
+
+  Just randoms (baseline):
+    72 705 140 ops/s, ±1.62%   | fastest
+
+Finished 1 case!
+Running "Converting random numbers to inverse lexicographic encoding" suite...
+Progress: 100%
+
+  base16.encode():
+    1 832 049 ops/s, ±1.13%   | slowest, 38.26% slower
+
+  base32.encode:
+    2 007 291 ops/s, ±3.42%   | 32.35% slower
+
+  base36.encode:
+    2 733 974 ops/s, ±2.19%   | 7.86% slower
+
+  base62.encode:
+    2 967 347 ops/s, ±0.96%   | fastest
+
+Finished 4 cases!
+  Fastest: base62.encode
+  Slowest: base16.encode()
+Running "Converting inverse lexicographic encoding back to numbers" suite...
+Progress: 100%
+
+  base16.decode():
+    2 326 712 ops/s, ±2.45%   | 15.23% slower
+
+  base32.decode():
+    2 744 656 ops/s, ±1.15%   | fastest
+
+  base36.decode():
+    1 947 971 ops/s, ±2.50%   | slowest, 29.03% slower
+
+  base62.decode():
+    1 962 106 ops/s, ±4.35%   | 28.51% slower
+
+Finished 4 cases!
+  Fastest: base32.decode()
+  Slowest: base36.decode()
+Running "Converting to and from inverse lexicographic encoding" suite...
+Progress: 100%
+
+  base16.encode():
+    1 143 259 ops/s, ±6.10%   | slowest, 19.05% slower
+
+  base32.encode:
+    1 346 793 ops/s, ±1.76%   | 4.63% slower
+
+  base36.encode:
+    1 359 610 ops/s, ±1.59%   | 3.73% slower
+
+  base62.encode:
+    1 412 220 ops/s, ±3.46%   | fastest
+
+Finished 4 cases!
+  Fastest: base62.encode
+  Slowest: base16.encode()
 ```
+
+## Acknowledgements
+
+This was [@kentonv](https://github.com/kentonv)'s idea, I just ported it to JS and tried out non-base16 implementations.
